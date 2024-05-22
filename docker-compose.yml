@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT}:${PORT}"
+    networks:
+      - server_network
+    depends_on:
+      - elasticsearch
+      - rabbitmq
+      - ngrok
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=changeme
+      - xpack.security.enabled=false
+    networks:
+      - server_network
+  
+  rabbitmq:
+    image: rabbitmq:3.6-management-alpine
+    ports:
+      - 15672:15672
+      - 5672:5672
+    # container_name: rabbitmq_email_project
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_DEFAULT_VHOST=/
+    networks:
+      - server_network
+
+  ngrok:
+    image: wernight/ngrok:latest
+    ports:
+      - 4040:4040
+    environment:
+      - NGROK_PORT=${NGROK_PORT}
+      - NGROK_AUTH=${NGROK_AUTH}
+
+
+networks:
+  server_network:
+    driver: bridge
