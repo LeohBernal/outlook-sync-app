@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OutlookSyncApp</title>
+    <script>
+        window.onload = function() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('outlook');
+        }
+
+        function submitAccountForm(event) {
+            event.preventDefault();
+            const username = document.getElementById('create-username').value;
+            const password = document.getElementById('create-password').value;
+            fetch('/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(user => {
+                localStorage.setItem('user', JSON.stringify(user));
+                window.location.href = '/account.html';
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Create Account</h1>
+    <form onsubmit="submitAccountForm(event)">
+        <label for="create-username">Username:</label><br>
+        <input type="text" id="create-username" name="username"><br>
+        <label for="create-password">Password:</label><br>
+        <input type="password" id="create-password" name="password"><br>
+        <input type="submit" value="Create Account">
+    </form>
+</body>
+</html>

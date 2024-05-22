@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OutlookSyncApp</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        window.onload = function() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/';
+            }
+
+            updateOutlookButton();
+        }
+
+        window.setLocalStorageItem = function(key, value) {
+            localStorage.setItem(key, value);
+            var event = new CustomEvent('localStorageItemSet', { detail: { key: key, value: value } });
+            window.dispatchEvent(event);
+        };
+
+        window.addEventListener('localStorageItemSet', function(event) {
+            if (event.detail.key === 'outlook') {
+                updateOutlookButton();
+            }
+        });
+
+        function updateOutlookButton() {
+            const outlookStatus = localStorage.getItem('outlook');
+            const outlookButton = document.getElementById('outlookButton');
+            const prevPageButton = document.getElementById('prevPage');
+            const nextPageButton = document.getElementById('nextPage');
+
+            if (outlookStatus === 'syncing') {
+                outlookButton.disabled = true;
+                outlookButton.textContent = 'Outlook is syncing';
+                prevPageButton.disabled = true;
+                nextPageButton.disabled = true;
+            } else if (outlookStatus === 'synced') {
+                outlookButton.disabled = true;
+                outlookButton.textContent = 'Outlook is already synced';
+                prevPageButton.disabled = false;
+                nextPageButton.disabled = false;
+                fetchMails();
+            } else {
+                outlookButton.disabled = false;
+                outlookButton.textContent = 'Sync your outlook account';
+                prevPageButton.disabled = true;
+                nextPageButton.disabled = true;
+            }
+        }
+
+        function setSyncing() {
+            localStorage.setItem('outlook', 'syncing');
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('outlook');
+            window.location.href = '/';
+        }
+
+
+        let currentPage = 0;
+        const pageSize = 10;
+        let mails = [];
+
+        async function fetchMails() {
+            const response = await fetch(`/mails?page=${currentPage}&size=${pageSize}`);
+            mails = await response.json();
+            displayMails(mails);
+        }
+
+        function displayMails(mails) {
+            const mailList = document.getElementById('mailList');
+            mailList.innerHTML = '';
+            mails.forEach(mail => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <h2>${mail.subject}</h2>
+                    <p>From: ${mail.sender.name} (${mail.sender.address})</p>
+                    <p>Received: ${new Date(mail.receivedDateTime).toLocaleString()}</p>
+                    <p>Read: ${mail.isRead ? 'Yes' : 'No'}</p>
+                    <p>Flagged: ${mail.isFlagged ? 'Yes' : 'No'}</p>
+                    <p>Deleted: ${mail.isDeleted ? 'Yes' : 'No'}</p>
+                `;
+                mailList.appendChild(li);
+            });
+        }
+
+        function nextPage() {
+            currentPage++;
+            fetchMails();
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                fetchMails();
+            }
+        }
+
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        const socket = io('http://localhost:3000');
+        socket.on(user.id, async message => {
+            if (message.topic === 'outlook') {
+                if (message.payload === 'syncing') {
+                    window.setLocalStorageItem('outlook', 'syncing');
+                }
+                if (message.payload === 'synced') {
+                    window.setLocalStorageItem('outlook', 'synced');
+                }
+            }
+            if (message.topic === 'mail') {
+                const updatedMail = message.payload;
+                const index = mails.findIndex(mail => mail.id === updatedMail.id);
+                if (index !== -1) {
+                    mails[index] = updatedMail;
+                    displayMails(mails);
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <div>
+        <h1>Welcome to OutlookSyncApp!</h1>
+        <a href="/outlook/signin"><button id="outlookButton" onclick="setSyncing()">Sync your outlook account</button></a>
+        <a href="/logout" onclick="logout()"><button>Logout</button></a>
+    </div>
+    <div>
+        <h2>Mails</h2>
+        <button onclick="prevPage()" id="prevPage">Previous Page</button>
+        <button onclick="nextPage()" id="nextPage">Next Page</button>
+        <ul id="mailList"></ul>
+    </div>
+</body>
+</html>
