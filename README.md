@@ -1,5 +1,7 @@
 # OutlookSyncApp
 
+![Application Flow GIF](readme_app.gif)
+
 ## Description
 OutlookSyncApp is an application designed to provide an integration between a local account and Outlook mail. The application offers API endpoints that allows users to create a local account and link it with their Outlook email address using OAuth. Upon successful account linking, the application synchronizes email data from Outlook to the local database. 
 
@@ -30,7 +32,7 @@ In addition to the initial synchronization, the application continuously monitor
 1. Clone the repository.
 2. Copy the `.env.example` file to `.env` and change the values to your own.
 3. Run `docker-compose up -d rabbitmq elasticsearch ngrok` to start the required services.
-4. Add the NGROK URI in the `AZURE_NOTIFICATIONS_URI` env var in the `.env` file.
+4. Replace `AZURE_NOTIFICATIONS_URI` and `AZURE_REDIRECT_URI` in the `.env` file with your NGROK URI. Don't forget to add this URI to Azure redirect endpoint. Also, update `APP_URI` in `account.html` with the same NGROK URI. Tip: Look for CHANGE_ME in the files.
 5. Run `docker-compose up -d --build server` to start the application.
 
 ## Application Flow

@@ -101,8 +101,9 @@
         }
 
 
+        const APP_URI = 'http://localhost:3000'; // CHANGE_ME
+        const socket = io(APP_URI);
         const user = JSON.parse(localStorage.getItem('user'));
-        const socket = io('http://localhost:3000');
         socket.on(user.id, async message => {
             if (message.topic === 'outlook') {
                 if (message.payload === 'syncing') {

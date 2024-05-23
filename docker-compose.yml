@@ -7,8 +7,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${PORT}:${PORT}"
-    networks:
-      - server_network
     depends_on:
       - elasticsearch
       - rabbitmq
@@ -22,8 +20,6 @@ services:
       - discovery.type=single-node
       - ELASTIC_PASSWORD=changeme
       - xpack.security.enabled=false
-    networks:
-      - server_network
   
   rabbitmq:
     image: rabbitmq:3.6-management-alpine
@@ -36,8 +32,6 @@ services:
       - RABBITMQ_USER=guest
       - RABBITMQ_PASS=guest
       - RABBITMQ_DEFAULT_VHOST=/
-    networks:
-      - server_network
 
   ngrok:
     image: wernight/ngrok:latest
@@ -46,8 +40,3 @@ services:
     environment:
       - NGROK_PORT=${NGROK_PORT}
       - NGROK_AUTH=${NGROK_AUTH}
-
-
-networks:
-  server_network:
-    driver: bridge
